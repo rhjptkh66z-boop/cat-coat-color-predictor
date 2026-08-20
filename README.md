@@ -2,7 +2,7 @@
 
 上传父猫、母猫的照片并勾选毛色特征，预测它们后代的毛色概率分布——以「SVG 示意图 + 文字」形式直观展示。
 
-**👉 在线体验：** https://你的用户名.github.io/cat-coat-color-predictor/
+**👉 在线体验：** https://rhjptkh66z-boop.github.io/cat-coat-color-predictor/
 
 ## 功能特性
 
