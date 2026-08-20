@@ -1,0 +1,8 @@
+# 本地工作区数据（不上传 GitHub）
+/.workbuddy/
+
+# macOS
+.DS_Store
+
+# 本地工作副本（Pages 入口为 index.html）
+猫色遗传预测器.html

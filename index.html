@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>猫咪毛色遗传预测器</title>
+<style>
+:root{
+  --bg:#faf7f2; --card:#ffffff; --line:#eee4d4; --line2:#e2d5c0;
+  --ink:#3d3528; --ink2:#8a7d66; --main:#f5a55c; --main-d:#d97f2e;
+  --main-l:#fdf0e1; --ok:#4c9a68; --bad:#c25b4a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 18px 60px}
+header{text-align:center;padding:26px 0 10px}
+header h1{font-size:30px;letter-spacing:1px;color:#b05c1e}
+header p{color:var(--ink2);margin-top:6px;font-size:14px}
+.sub-badge{display:inline-block;margin-top:10px;font-size:12px;color:var(--main-d);background:var(--main-l);border:1px solid #f2d3ab;padding:3px 12px;border-radius:99px}
+section{margin-top:26px}
+h2.sec{font-size:19px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+h2.sec .no{display:inline-flex;width:26px;height:26px;border-radius:50%;background:var(--main);color:#fff;align-items:center;justify-content:center;font-size:14px;flex:none}
+
+/* ---- 亲代卡片 ---- */
+.parents{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:820px){.parents{grid-template-columns:1fr}}
+.cat-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 1px 4px rgba(176,120,40,.06)}
+.cat-card h3{font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.tag{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--main-l);color:var(--main-d);font-weight:normal}
+.photo-zone{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.photo-preview{width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid var(--line2)}
+.photo-label{flex:1;display:block;border:2px dashed var(--line2);border-radius:12px;padding:14px 10px;text-align:center;color:var(--ink2);font-size:13px;cursor:pointer;transition:.15s;background:#fdfbf7}
+.photo-label:hover{border-color:var(--main);color:var(--main-d);background:var(--main-l)}
+.photo-label input{display:none}
+.field{margin:12px 0}
+.field>label.lbl{display:block;font-size:13px;color:var(--ink2);margin-bottom:6px}
+.chip-grid{display:flex;flex-wrap:wrap;gap:7px}
+.chip{position:relative;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line2);border-radius:99px;padding:4px 11px;font-size:13px;cursor:pointer;user-select:none;background:#fff;transition:.12s}
+.chip:hover{border-color:var(--main)}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip:has(input:checked){border-color:var(--main);background:var(--main-l);color:var(--main-d);font-weight:600}
+.swatch{width:13px;height:13px;border-radius:50%;background:var(--c);border:1px solid rgba(0,0,0,.15);flex:none}
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:14px;cursor:pointer;user-select:none}
+.chk input{width:15px;height:15px;accent-color:var(--main)}
+.hint{font-size:12px;color:var(--bad);margin-left:8px}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:99px;overflow:hidden}
+.seg label{padding:4px 16px;font-size:13px;cursor:pointer;background:#fff;color:var(--ink2)}
+.seg label:not(:last-child){border-right:1px solid var(--line2)}
+.seg label:has(input:checked){background:var(--main);color:#fff;font-weight:600}
+.seg input{display:none}
+.panel{margin-top:10px;border:1px dashed var(--main);background:var(--main-l);border-radius:10px;padding:10px 12px}
+.panel .p-title{font-size:12px;color:var(--main-d);margin-bottom:8px}
+.panel .chip{background:#fff}
+.inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.small-hint{font-size:12px;color:var(--ink2);margin-top:6px}
+
+/* ---- 按钮 ---- */
+.action{text-align:center;margin-top:30px}
+.btn{background:linear-gradient(180deg,#f7b26c,#ee9a45);border:none;color:#fff;font-size:17px;font-weight:700;padding:13px 46px;border-radius:99px;cursor:pointer;box-shadow:0 4px 14px rgba(217,127,46,.35);transition:.15s;letter-spacing:2px}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(217,127,46,.45)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+
+/* ---- 结果 ---- */
+.res-box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:0 1px 4px rgba(176,120,40,.06)}
+.summary{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px;font-size:13px;color:var(--ink2)}
+.summary .s-item{background:#fbf6ec;border:1px solid var(--line);border-radius:10px;padding:8px 14px}
+.summary b{color:var(--ink)}
+.sex-h{font-size:16px;margin:18px 0 10px;display:flex;align-items:center;gap:8px}
+.sex-h .sx{display:inline-flex;width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center;font-size:13px;color:#fff}
+.sx.m{background:#5b8fd4}.sx.f{background:#d46a9e}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;transition:.15s;break-inside:avoid}
+.card:hover{box-shadow:0 3px 10px rgba(176,120,40,.15);border-color:var(--main)}
+.card .svg-box{width:100%;height:118px;display:flex;align-items:center;justify-content:center}
+.card .svg-box svg{height:100%;width:auto}
+.card .p-name{font-size:14px;font-weight:700;margin-top:6px}
+.card .p-prob{font-size:15px;color:var(--main-d);font-weight:800;margin-top:2px}
+.card .p-desc{font-size:11.5px;color:var(--ink2);margin-top:4px;line-height:1.4}
+.card.other{opacity:.8}
+.card.other .svg-box svg{opacity:.35}
+.bar{height:4px;border-radius:99px;background:var(--line);margin-top:7px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#f7b26c,#ee9a45)}
+
+/* ---- 科普 ---- */
+details.science{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 20px}
+details.science summary{cursor:pointer;font-size:16px;font-weight:700;color:#b05c1e;list-style:none;display:flex;align-items:center;gap:8px}
+details.science summary::before{content:"▸";transition:.15s;color:var(--main)}
+details.science[open] summary::before{transform:rotate(90deg)}
+.science-inner{margin-top:12px;font-size:13.5px;color:#4a4132}
+table.loci{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+table.loci th,table.loci td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+table.loci th{background:var(--main-l);color:var(--main-d);white-space:nowrap}
+.science-inner h4{margin:14px 0 6px;color:#b05c1e;font-size:14.5px}
+.science-inner p{margin:6px 0}
+.science-inner ul{margin:6px 0 6px 20px}
+.science-inner li{margin:3px 0}
+
+footer{margin-top:30px;text-align:center;font-size:12px;color:var(--ink2);line-height:1.7}
+footer .disc{background:var(--main-l);border:1px solid #f2d3ab;border-radius:10px;padding:10px 16px;max-width:760px;margin:0 auto 14px;color:#8a6a3d}
+
+/* ---- 打印 ---- */
+@media print{
+  body{background:#fff}
+  .photo-label,.action,.cat-card .field,.btn{display:none!important}
+  .parents{grid-template-columns:1fr 1fr}
+  .grid{grid-template-columns:repeat(4,1fr)}
+  .card{box-shadow:none}
+  details.science{open:true}
+  .wrap{padding:10px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>🐾 猫咪毛色遗传预测器</h1>
+  <p>上传父猫、母猫的照片并勾选毛色特征，预测它们后代的毛色概率分布</p>
+  <span class="sub-badge">基于简化孟德尔模型 · 仅供科普娱乐</span>
+</header>
+
+<main>
+  <section>
+    <h2 class="sec"><span class="no">1</span>填写亲代信息</h2>
+    <div class="parents">
+      <!-- ===== 父 ===== -->
+      <div class="cat-card" data-idx="0">
+        <h3>父猫 <span class="tag">♂ 雄性</span></h3>
+        <div class="photo-zone">
+          <img class="photo-preview" alt="父猫照片">
+          <label class="photo-label">点击上传父猫照片（可选）<input type="file" accept="image/*" data-role="photo"></label>
+        </div>
+        <div class="field">
+          <label class="lbl">性别</label>
+          <div class="seg" data-role="sex">
+            <label><input type="radio" name="sex0" value="M" checked>公</label>
+            <label><input type="radio" name="sex0" value="F">母</label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="lbl">毛色（被毛主体颜色）</label>
+          <div class="chip-grid" data-role="color">
+            <label class="chip"><input type="radio" name="color0" value="black" checked><span class="swatch" style="--c:#2f3437"></span>黑</label>
+            <label class="chip"><input type="radio" name="color0" value="blue"><span class="swatch" style="--c:#8496a8"></span>蓝</label>
+            <label class="chip"><input type="radio" name="color0" value="chocolate"><span class="swatch" style="--c:#6f3f2a"></span>巧克力</label>
+            <label class="chip"><input type="radio" name="color0" value="lilac"><span class="swatch" style="--c:#b7a6c8"></span>淡紫</label>
+            <label class="chip"><input type="radio" name="color0" value="cinnamon"><span class="swatch" style="--c:#a65a34"></span>肉桂</label>
+            <label class="chip"><input type="radio" name="color0" value="fawn"><span class="swatch" style="--c:#d8c0a4"></span>淡黄褐</label>
+            <label class="chip"><input type="radio" name="color0" value="orange"><span class="swatch" style="--c:#f0a04b"></span>橘</label>
+            <label class="chip"><input type="radio" name="color0" value="cream"><span class="swatch" style="--c:#f6e3c0"></span>奶油</label>
+          </div>
+        </div>
+        <div class="field" data-role="tortie-field" hidden>
+          <label class="chk"><input type="checkbox" data-role="tortie">玳瑁/三花（黑+橘双色斑纹，仅母猫）</label>
+          <div class="panel" data-role="tortie-panel" hidden>
+            <div class="p-title">玳瑁的底层基色（非橘部分的颜色）</div>
+            <div class="chip-grid" data-role="tortie-color">
+              <label class="chip"><input type="radio" name="tcolor0" value="black" checked><span class="swatch" style="--c:#2f3437"></span>黑</label>
+              <label class="chip"><input type="radio" name="tcolor0" value="blue"><span class="swatch" style="--c:#8496a8"></span>蓝</label>
+              <label class="chip"><input type="radio" name="tcolor0" value="chocolate"><span class="swatch" style="--c:#6f3f2a"></span>巧克力</label>
+              <label class="chip"><input type="radio" name="tcolor0" value="lilac"><span class="swatch" style="--c:#b7a6c8"></span>淡紫</label>
+              <label class="chip"><input type="radio" name="tcolor0" value="cinnamon"><span class="swatch" style="--c:#a65a34"></span>肉桂</label>
+              <label class="chip"><input type="radio" name="tcolor0" value="fawn"><span class="swatch" style="--c:#d8c0a4"></span>淡黄褐</label>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="chk"><input type="checkbox" data-role="agouti" checked>身上有虎斑纹（鱼骨/斑点/经典纹）</label>
+          <span class="hint" data-role="agouti-hint" hidden>橘/奶油猫无论基因型都带虎斑纹，此项自动忽略</span>
+        </div>
+        <div class="field">
+          <label class="lbl">白斑程度（胸、腹、脚的白毛）</label>
+          <div class="seg" data-role="white">
+            <label><input type="radio" name="white0" value="0" checked>无</label>
+            <label><input type="radio" name="white0" value="1">小</label>
+            <label><input type="radio" name="white0" value="2">中</label>
+            <label><input type="radio" name="white0" value="3">大</label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="chk"><input type="checkbox" data-role="iswhite">纯白（全身白毛）</label>
+          <div class="panel" data-role="white-panel" hidden>
+            <div class="p-title">纯白的底层毛色（若不纯白原本会是什么颜色）</div>
+            <div class="chip-grid" data-role="white-color">
+              <label class="chip"><input type="radio" name="wcolor0" value="black" checked><span class="swatch" style="--c:#2f3437"></span>黑</label>
+              <label class="chip"><input type="radio" name="wcolor0" value="blue"><span class="swatch" style="--c:#8496a8"></span>蓝</label>
+              <label class="chip"><input type="radio" name="wcolor0" value="chocolate"><span class="swatch" style="--c:#6f3f2a"></span>巧克力</label>
+              <label class="chip"><input type="radio" name="wcolor0" value="lilac"><span class="swatch" style="--c:#b7a6c8"></span>淡紫</label>
+              <label class="chip"><input type="radio" name="wcolor0" value="cinnamon"><span class="swatch" style="--c:#a65a34"></span>肉桂</label>
+              <label class="chip"><input type="radio" name="wcolor0" value="fawn"><span class="swatch" style="--c:#d8c0a4"></span>淡黄褐</label>
+              <label class="chip"><input type="radio" name="wcolor0" value="orange"><span class="swatch" style="--c:#f0a04b"></span>橘</label>
+              <label class="chip"><input type="radio" name="wcolor0" value="cream"><span class="swatch" style="--c:#f6e3c0"></span>奶油</label>
+            </div>
+            <div style="margin-top:8px">
+              <label class="chk"><input type="checkbox" data-role="hidden-agouti" checked>底层带虎斑纹</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ===== 母 ===== -->
+      <div class="cat-card" data-idx="1">
+        <h3>母猫 <span class="tag">♀ 雌性</span></h3>
+        <div class="photo-zone">
+          <img class="photo-preview" alt="母猫照片">
+          <label class="photo-label">点击上传母猫照片（可选）<input type="file" accept="image/*" data-role="photo"></label>
+        </div>
+        <div class="field">
+          <label class="lbl">性别</label>
+          <div class="seg" data-role="sex">
+            <label><input type="radio" name="sex1" value="M">公</label>
+            <label><input type="radio" name="sex1" value="F" checked>母</label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="lbl">毛色（被毛主体颜色）</label>
+          <div class="chip-grid" data-role="color">
+            <label class="chip"><input type="radio" name="color1" value="black" checked><span class="swatch" style="--c:#2f3437"></span>黑</label>
+            <label class="chip"><input type="radio" name="color1" value="blue"><span class="swatch" style="--c:#8496a8"></span>蓝</label>
+            <label class="chip"><input type="radio" name="color1" value="chocolate"><span class="swatch" style="--c:#6f3f2a"></span>巧克力</label>
+            <label class="chip"><input type="radio" name="color1" value="lilac"><span class="swatch" style="--c:#b7a6c8"></span>淡紫</label>
+            <label class="chip"><input type="radio" name="color1" value="cinnamon"><span class="swatch" style="--c:#a65a34"></span>肉桂</label>
+            <label class="chip"><input type="radio" name="color1" value="fawn"><span class="swatch" style="--c:#d8c0a4"></span>淡黄褐</label>
+            <label class="chip"><input type="radio" name="color1" value="orange"><span class="swatch" style="--c:#f0a04b"></span>橘</label>
+            <label class="chip"><input type="radio" name="color1" value="cream"><span class="swatch" style="--c:#f6e3c0"></span>奶油</label>
+          </div>
+        </div>
+        <div class="field" data-role="tortie-field" hidden>
+          <label class="chk"><input type="checkbox" data-role="tortie">玳瑁/三花（黑+橘双色斑纹，仅母猫）</label>
+          <div class="panel" data-role="tortie-panel" hidden>
+            <div class="p-title">玳瑁的底层基色（非橘部分的颜色）</div>
+            <div class="chip-grid" data-role="tortie-color">
+              <label class="chip"><input type="radio" name="tcolor1" value="black" checked><span class="swatch" style="--c:#2f3437"></span>黑</label>
+              <label class="chip"><input type="radio" name="tcolor1" value="blue"><span class="swatch" style="--c:#8496a8"></span>蓝</label>
+              <label class="chip"><input type="radio" name="tcolor1" value="chocolate"><span class="swatch" style="--c:#6f3f2a"></span>巧克力</label>
+              <label class="chip"><input type="radio" name="tcolor1" value="lilac"><span class="swatch" style="--c:#b7a6c8"></span>淡紫</label>
+              <label class="chip"><input type="radio" name="tcolor1" value="cinnamon"><span class="swatch" style="--c:#a65a34"></span>肉桂</label>
+              <label class="chip"><input type="radio" name="tcolor1" value="fawn"><span class="swatch" style="--c:#d8c0a4"></span>淡黄褐</label>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="chk"><input type="checkbox" data-role="agouti" checked>身上有虎斑纹（鱼骨/斑点/经典纹）</label>
+          <span class="hint" data-role="agouti-hint" hidden>橘/奶油猫无论基因型都带虎斑纹，此项自动忽略</span>
+        </div>
+        <div class="field">
+          <label class="lbl">白斑程度（胸、腹、脚的白毛）</label>
+          <div class="seg" data-role="white">
+            <label><input type="radio" name="white1" value="0" checked>无</label>
+            <label><input type="radio" name="white1" value="1">小</label>
+            <label><input type="radio" name="white1" value="2">中</label>
+            <label><input type="radio" name="white1" value="3">大</label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="chk"><input type="checkbox" data-role="iswhite">纯白（全身白毛）</label>
+          <div class="panel" data-role="white-panel" hidden>
+            <div class="p-title">纯白的底层毛色（若不纯白原本会是什么颜色）</div>
+            <div class="chip-grid" data-role="white-color">
+              <label class="chip"><input type="radio" name="wcolor1" value="black" checked><span class="swatch" style="--c:#2f3437"></span>黑</label>
+              <label class="chip"><input type="radio" name="wcolor1" value="blue"><span class="swatch" style="--c:#8496a8"></span>蓝</label>
+              <label class="chip"><input type="radio" name="wcolor1" value="chocolate"><span class="swatch" style="--c:#6f3f2a"></span>巧克力</label>
+              <label class="chip"><input type="radio" name="wcolor1" value="lilac"><span class="swatch" style="--c:#b7a6c8"></span>淡紫</label>
+              <label class="chip"><input type="radio" name="wcolor1" value="cinnamon"><span class="swatch" style="--c:#a65a34"></span>肉桂</label>
+              <label class="chip"><input type="radio" name="wcolor1" value="fawn"><span class="swatch" style="--c:#d8c0a4"></span>淡黄褐</label>
+              <label class="chip"><input type="radio" name="wcolor1" value="orange"><span class="swatch" style="--c:#f0a04b"></span>橘</label>
+              <label class="chip"><input type="radio" name="wcolor1" value="cream"><span class="swatch" style="--c:#f6e3c0"></span>奶油</label>
+            </div>
+            <div style="margin-top:8px">
+              <label class="chk"><input type="checkbox" data-role="hidden-agouti" checked>底层带虎斑纹</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="action">
+    <button class="btn" id="calcBtn">计算后代毛色概率</button>
+  </section>
+
+  <section id="resultSec" hidden>
+    <h2 class="sec"><span class="no">2</span>后代毛色预测结果</h2>
+    <div class="res-box">
+      <div class="summary" id="summary"></div>
+      <div class="sex-h"><span class="sx m">♂</span> 公猫后代</div>
+      <div class="grid" id="gridM"></div>
+      <div class="sex-h"><span class="sx f">♀</span> 母猫后代</div>
+      <div class="grid" id="gridF"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec"><span class="no">3</span>毛色遗传小科普</h2>
+    <details class="science" open>
+      <summary>猫毛色的遗传原理（点击展开/收起）</summary>
+      <div class="science-inner">
+        <p>猫的被毛颜色由多个基因位点共同决定，以下是本工具使用的简化模型：</p>
+        <table class="loci">
+          <tr><th>位点</th><th>等位基因</th><th>作用</th><th>显性关系</th></tr>
+          <tr><td>B</td><td>B / b / b1</td><td>决定真黑素颜色：黑 / 巧克力 / 肉桂</td><td>B &gt; b &gt; b1（完全显性）</td></tr>
+          <tr><td>D</td><td>D / d</td><td>稀释作用：让颜色变浅（黑→蓝，巧克力→淡紫，肉桂→淡黄褐，橘→奶油）</td><td>D &gt; d；dd 才稀释</td></tr>
+          <tr><td>O</td><td>O / o</td><td>橘色基因，位于 X 染色体上</td><td>雄性单拷贝：X<sup>O</sup>Y=橘；雌性需双拷贝 X<sup>O</sup>X<sup>O</sup> 才纯橘，X<sup>O</sup>X<sup>o</sup>=玳瑁</td></tr>
+          <tr><td>A</td><td>A / a</td><td>虎斑纹（鱼骨纹、斑点纹等）</td><td>A &gt; a；橘/奶油猫无论 A/a 都显示虎斑纹</td></tr>
+          <tr><td>S</td><td>S / s（简化）</td><td>白斑（胸、腹、脚的白毛）</td><td>本工具按白斑程度 0-3 级整数模型遗传</td></tr>
+          <tr><td>W</td><td>W / w</td><td>纯白，掩盖一切其他颜色</td><td>W 显性；带一个 W 即纯白</td></tr>
+        </table>
+        <h4>玳瑁猫（三花猫）</h4>
+        <p>玳瑁猫几乎全是母猫，因为橘色基因在 X 染色体上：母猫有两条 X，一条带橘色（O）、一条不带（o）时，身体不同区域的毛色细胞随机选择其中一条 X 生效，于是形成黑/橘相间的斑块。若有白斑基因参与，则成为三花猫。</p>
+        <h4>关于本工具的简化说明</h4>
+        <ul>
+          <li><b>杂合子先验</b>：从外表无法判断显性基因是纯合还是杂合（例如黑猫可能是 BB、Bb 或 Bb1），本工具按"无信息先验"对每种可能等权枚举。真实种群的等位基因频率会略有差异。</li>
+          <li><b>白斑等级模型</b>：真实 S 位点是不完全显性且受多个修饰基因影响，本工具简化为后代白斑程度≈亲代平均程度±1级。</li>
+          <li><b>纯白隐藏基因</b>：纯白猫携带的底层颜色与虎斑基因无法从外表看出，需按经验估计，可能与实际不符。</li>
+          <li>未覆盖重点色（暹罗/布偶）、银色抑制基因、长毛、无毛等位点；橘猫的斑纹纹理（鱼骨/斑点/经典纹）也未细分。</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+</main>
+
+<footer>
+  <div class="disc">
+    ⚠️ 本工具基于简化的孟德尔遗传模型，结果仅为趣味科普参考，不具备遗传咨询或繁育决策价值。实际小猫的毛色还会受更多基因与随机因素影响。
+  </div>
+  <p>猫咪毛色遗传预测器 · 单文件离线版 · 所有照片仅在本机浏览器中处理，不会上传</p>
+</footer>
+</div>
+
+<script id="core-script">
+'use strict';
+/* ============ 遗传核心（纯函数，无 DOM 依赖） ============ */
+
+const COLORS = {
+  black:     { name:'黑',     b:[['B','B'],['B','b'],['B','b1']], d:[['D','D'],['D','d']], rgb:'#2f3437', dark:'#15181a' },
+  blue:      { name:'蓝',     b:[['B','B'],['B','b'],['B','b1']], d:[['d','d']],          rgb:'#8496a8', dark:'#5c6d7d' },
+  chocolate: { name:'巧克力', b:[['b','b'],['b','b1']],           d:[['D','D'],['D','d']], rgb:'#6f3f2a', dark:'#4a2818' },
+  lilac:     { name:'淡紫',   b:[['b','b'],['b','b1']],           d:[['d','d']],          rgb:'#b7a6c8', dark:'#8f7ba6' },
+  cinnamon:  { name:'肉桂',   b:[['b1','b1']],                    d:[['D','D'],['D','d']], rgb:'#a65a34', dark:'#7a3d1f' },
+  fawn:      { name:'淡黄褐', b:[['b1','b1']],                    d:[['d','d']],          rgb:'#d8c0a4', dark:'#b39674' },
+  orange:    { name:'橘',     b:[['B','B'],['B','b'],['B','b1'],['b','b'],['b','b1'],['b1','b1']], d:[['D','D'],['D','d']], rgb:'#f0a04b', dark:'#c97a26' },
+  cream:     { name:'奶油',   b:[['B','B'],['B','b'],['B','b1'],['b','b'],['b','b1'],['b1','b1']], d:[['d','d']],          rgb:'#f6e3c0', dark:'#e2c392' },
+  white:     { name:'纯白',   rgb:'#f7f4ef', dark:'#dcd8d0' },
+};
+const BASE_NAMES = { black:'黑', blue:'蓝', chocolate:'巧克力', lilac:'淡紫', cinnamon:'肉桂', fawn:'淡黄褐', orange:'橘', cream:'奶油', white:'纯白' };
+const TORTIE_NAMES = { black:'黑玳瑁', blue:'蓝奶油', chocolate:'巧克力玳瑁', lilac:'淡紫奶油', cinnamon:'肉桂玳瑁', fawn:'淡黄褐奶油' };
+const PATTERN_NAMES = { solid:'纯色', tabby:'虎斑' };
+const WHITE_NAMES = ['无白斑','小白斑','中白斑','大白斑'];
+
+function cartesian(...arrays){
+  let res=[[]];
+  for(const arr of arrays){
+    const next=[];
+    for(const r of res) for(const a of arr) next.push([...r,a]);
+    res=next;
+  }
+  return res;
+}
+
+/* 表型 → 可能基因型（等权枚举，无信息先验） */
+function enumerateGenotypes(cat){
+  // 玳瑁的底层基色来自 hiddenColor（tortie 时 color 字段可能为兜底值）
+  const c = cat.isWhite ? cat.hiddenColor : (cat.tortie ? cat.hiddenColor : cat.color);
+  const isOrange = (c==='orange'||c==='cream');
+  const isTortie = (cat.sex==='F' && cat.tortie);
+  const bCands = COLORS[c].b;
+  const dCands = COLORS[c].d;
+  let oCands;
+  if(cat.sex==='M')      oCands = isOrange ? [['O']] : [['o']];
+  else if(isOrange)      oCands = [['O','O']];
+  else if(isTortie)      oCands = [['O','o']];
+  else                   oCands = [['o','o']];
+  const agouti = cat.isWhite ? cat.hiddenAgouti : cat.agouti;
+  let aCands;
+  if(isOrange || isTortie) aCands = [['A','A'],['A','a'],['a','a']];   // 橘/玳瑁恒显虎斑，A 仍需全枚举供遗传
+  else                     aCands = agouti ? [['A','A'],['A','a']] : [['a','a']];
+  const wCands = cat.isWhite ? [['W','W'],['W','w']] : [['w','w']];
+  const combos = cartesian(bCands, dCands, oCands, aCands, wCands);
+  const w = 1/combos.length;
+  return combos.map(([B,D,O,A,W])=>({ geno:{B,D,O,A,W}, weight:w }));
+}
+
+/* 单位点孟德尔交叉，返回 [{pair, prob}]（排序归一） */
+function crossLocus(a1, a2){
+  const m=new Map();
+  for(const x of a1) for(const y of a2){
+    const k=[x,y].sort().join('');
+    m.set(k,(m.get(k)||0)+1);
+  }
+  const total=Array.from(m.values()).reduce((s,v)=>s+v,0);
+  return Array.from(m.entries()).map(([k,cnt])=>({ pair:[k[0],k[1]], prob:cnt/total }));
+}
+
+function expand(result, L, opts){
+  const next=[];
+  for(const r of result) for(const o of opts) next.push({ ...r, [L]:o.pair, prob:r.prob*o.prob });
+  return next;
+}
+
+/* 两亲代基因型 → 指定性别后代基因型分布（含 X 连锁 O 位点） */
+function combineGenomes(g1, g2, sex){
+  let result=[{ B:null,D:null,A:null,W:null,O:null, prob:1 }];
+  for(const L of ['B','D','A','W']){
+    const opts=crossLocus(g1[L], g2[L]);
+    result=expand(result, L, opts);
+  }
+  if(sex==='M'){                                   // 儿子：X 全部来自母亲（父给 Y）
+    const opts=g2.O.map(o=>({ pair:[o], prob:1/g2.O.length }));
+    result=expand(result,'O',opts);
+  }else{                                           // 女儿：父 X(唯一) + 母一条 X
+    const f=g1.O[0];
+    const opts=g2.O.map(o=>({ pair:[f,o].sort(), prob:1/g2.O.length }));
+    result=expand(result,'O',opts);
+  }
+  return result;
+}
+
+function colorFromBD(bPair, dPair){
+  const b=bPair.includes('B') ? 'B' : (bPair.includes('b') ? 'b' : 'b1');
+  const dil=(dPair.join('')==='dd');
+  if(dil) return b==='B' ? 'blue' : b==='b' ? 'lilac' : 'fawn';
+  return   b==='B' ? 'black' : b==='b' ? 'chocolate' : 'cinnamon';
+}
+
+/* 后代基因型 → 表型对象 */
+function phenoFromGeno(g, sex, whiteLevel){
+  let isOrange=false, tortie=false;
+  if(sex==='M') isOrange = (g.O[0]==='O');
+  else{
+    const o=[g.O[0],g.O[1]].sort().join('');
+    if(o==='OO') isOrange=true; else if(o==='Oo') tortie=true;
+  }
+  // 纯白掩盖一切，但底层色需考虑 O 位点（橘/奶油）
+  if(g.W.includes('W')){
+    const hidden = isOrange ? (g.D.join('')==='dd' ? 'cream' : 'orange') : colorFromBD(g.B, g.D);
+    return { key:`white__${hidden}`, base:'white', hiddenBase:hidden, pattern:'solid', tortie:false, whiteLevel:0 };
+  }
+  let base;
+  if(isOrange) base = (g.D.join('')==='dd') ? 'cream' : 'orange';
+  else{
+    base = colorFromBD(g.B, g.D);
+    if(tortie) base = base + '+orange';
+  }
+  const pattern = (isOrange||tortie) ? 'tabby' : (g.A.includes('A') ? 'tabby' : 'solid');
+  return { key:`${base}.${pattern}.${whiteLevel}`, base, pattern, tortie, whiteLevel };
+}
+
+/* 白斑等级分布：均值±1 级，clamp 0-3，等权（边界处自然向界内收缩） */
+function whiteSpotDist(l1, l2){
+  const mean=(l1+l2)/2;
+  const m={};
+  for(const d of [-1,0,1]){
+    const lv=Math.max(0, Math.min(3, Math.round(mean+d)));
+    m[lv]=(m[lv]||0)+1;
+  }
+  const total=Object.values(m).reduce((s,v)=>s+v,0);
+  return Object.entries(m).map(([lv,c])=>({ lv:+lv, prob:c/total }));
+}
+
+/* 主流程：预测 → 每性别概率分布（归一化 + 降序） */
+function predict(father, mother){
+  const fGenos=enumerateGenotypes(father);
+  const mGenos=enumerateGenotypes(mother);
+  const acc={ M:{}, F:{} }, phen={ M:{}, F:{} };
+  for(const g1 of fGenos) for(const g2 of mGenos){
+    const w=g1.weight*g2.weight;
+    for(const sex of ['M','F']){
+      const children=combineGenomes(g1.geno, g2.geno, sex);
+      const sDist=whiteSpotDist(father.whiteLevel, mother.whiteLevel);
+      for(const child of children){
+        for(const s of sDist){
+          const p=phenoFromGeno(child, sex, s.lv);
+          acc[sex][p.key]=(acc[sex][p.key]||0) + w*child.prob*0.5*s.prob;
+          phen[sex][p.key]=p;
+        }
+      }
+    }
+  }
+  function summarizeWith(bucket, phenMap){
+    let total=0; for(const k in bucket) total+=bucket[k];
+    const arr=Object.keys(bucket).map(k=>({ key:k, prob:bucket[k]/total, phen:phenMap[k] }));
+    arr.sort((a,b)=>b.prob-a.prob);
+    return arr;
+  }
+  return {
+    M: summarizeWith(acc.M, phen.M),
+    F: summarizeWith(acc.F, phen.F),
+    combos: fGenos.length * mGenos.length,
+  };
+}
+
+/* ============ 显示名 ============ */
+function displayName(phen){
+  let head;
+  if(phen.base==='white'){
+    head = '纯白（底' + BASE_NAMES[phen.hiddenBase] + '）';
+  }else if(phen.tortie){
+    head = TORTIE_NAMES[phen.base.replace('+orange','')];
+  }else{
+    head = BASE_NAMES[phen.base];
+  }
+  return head + '·' + PATTERN_NAMES[phen.pattern] + (phen.whiteLevel>0 ? '·'+WHITE_NAMES[phen.whiteLevel] : '');
+}
+function displayDesc(phen, sex){
+  const parts=[];
+  parts.push(sex==='M' ? '公' : '母');
+  if(phen.base==='white') parts.push('全身白毛');
+  else if(phen.tortie){
+    const b=phen.base.replace('+orange','');
+    parts.push(COLORS[b].name + '与橘色斑块相间');
+    if(b==='blue'||b==='lilac'||b==='fawn') parts.push('（稀释玳瑁，橘色呈奶油色）');
+  }else{
+    parts.push(COLORS[phen.base].name + '色被毛');
+  }
+  parts.push(phen.pattern==='tabby' ? '带虎斑纹' : '无虎斑纹');
+  if(phen.whiteLevel>0) parts.push(WHITE_NAMES[phen.whiteLevel]);
+  return parts.join(' · ');
+}
+
+/* ============ SVG 参数化示意猫 ============ */
+function hashString(s){
+  let h=5381;
+  for(let i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))>>>0; }
+  return h;
+}
+function mulberry32(seed){
+  let a=seed>>>0;
+  return function(){
+    a|=0; a=(a+0x6D2B79F5)|0;
+    let t=Math.imul(a^(a>>>15), 1|a);
+    t=(t+Math.imul(t^(t>>>7), 61|t))^t;
+    return ((t^(t>>>14))>>>0)/4294967296;
+  };
+}
+
+const CAT_PARTS = {
+  head:'<ellipse cx="100" cy="78" rx="62" ry="54"/>',
+  earL:'<path d="M35,44 L58,6 L96,40 Z"/>',
+  earR:'<path d="M104,40 L142,6 L165,44 Z"/>',
+  body:'<path d="M38,124 Q36,166 70,166 Q100,176 130,166 Q164,166 162,124 Q150,100 100,100 Q50,100 38,124 Z"/>',
+  tail:'<path d="M160,130 Q184,134 180,152 Q176,168 158,163" fill="none" stroke-width="13" stroke-linecap="round"/>',
+  pawL:'<ellipse cx="82" cy="166" rx="13" ry="7"/>',
+  pawR:'<ellipse cx="118" cy="166" rx="13" ry="7"/>',
+};
+
+function catSVG(opts){
+  const { base, pattern, tortie, whiteLevel, isWhite, hiddenBase } = opts;
+  const seedStr = [base, pattern, tortie?1:0, hiddenBase||''].join('|');
+  const rnd = mulberry32(hashString(seedStr));
+  // 唯一 clip id（同表型每次渲染一致，不同表型互不冲突）
+  const uid = 'c' + (hashString(seedStr + '|clip') % 1000000);
+  let color, dark, orangePatch;
+  if(base==='white'){
+    color = COLORS.white.rgb; dark = COLORS.white.dark;
+  }else if(tortie){
+    const b = base.replace('+orange','');
+    color = COLORS[b].rgb; dark = COLORS[b].dark;
+    const dil = (b==='blue'||b==='lilac'||b==='fawn');
+    orangePatch = dil ? '#f6e3c0' : '#f0a04b';
+  }else{
+    color = COLORS[base].rgb; dark = COLORS[base].dark;
+  }
+  const bodyStroke = (isWhite || base==='white') ? ' stroke="#dcd8d0" stroke-width="2.5"' : '';
+  const parts = [CAT_PARTS.earL, CAT_PARTS.earR, CAT_PARTS.head, CAT_PARTS.body];
+  /* 底形 */
+  let svg = '<svg viewBox="0 0 200 190" xmlns="http://www.w3.org/2000/svg" role="img">';
+  svg += '<defs><clipPath id="'+uid+'b"><path d="M38,124 Q36,166 70,166 Q100,176 130,166 Q164,166 162,124 Q150,100 100,100 Q50,100 38,124 Z"/></clipPath>'
+       + '<clipPath id="'+uid+'h"><ellipse cx="100" cy="78" rx="62" ry="54"/></clipPath></defs>';
+  svg += '<g fill="'+color+'">'+parts.join('')+'</g>';
+  svg += '<path d="M160,130 Q184,134 180,152 Q176,168 158,163" fill="none" stroke="'+color+'" stroke-width="13" stroke-linecap="round"'+(bodyStroke?' stroke="#dcd8d0" stroke-width="2.5"':'')+'/>';
+
+  /* 白斑层 */
+  if(whiteLevel>=1){
+    const W='#f7f4ef';
+    let blobs='';
+    if(whiteLevel>=1){
+      blobs += '<ellipse cx="100" cy="148" rx="16" ry="12"/>';                       // 胸前
+      blobs += '<circle cx="76" cy="169" r="5.5"/><circle cx="124" cy="169" r="5.5"/>'; // 爪
+    }
+    if(whiteLevel>=2){
+      blobs += '<ellipse cx="100" cy="153" rx="36" ry="19"/>';                       // 白肚
+      blobs += '<ellipse cx="100" cy="88" rx="21" ry="11" clip-path="url(#'+uid+'h)"/>'; // 嘴套
+    }
+    if(whiteLevel>=3){
+      blobs += '<ellipse cx="100" cy="86" rx="31" ry="23" clip-path="url(#'+uid+'h)"/>'; // 脸罩
+      blobs += '<ellipse cx="76" cy="168" rx="13" ry="8"/><ellipse cx="124" cy="168" rx="13" ry="8"/>'; // 长袜脚
+      blobs += '<circle cx="174" cy="156" r="7"/>';                                   // 尾尖
+    }
+    svg += '<g fill="'+W+'" clip-path="url(#'+uid+'b)">'+blobs+'</g>';
+  }
+
+  /* 虎斑层 */
+  if(pattern==='tabby'){
+    svg += '<g fill="none" stroke="'+dark+'" stroke-width="4" stroke-linecap="round" opacity=".45">'
+      + '<path d="M80,52 Q85,44 90,52"/>'          // M 纹左
+      + '<path d="M90,52 Q100,40 110,52"/>'        // M 纹中
+      + '<path d="M110,52 Q115,44 120,52"/>'       // M 纹右
+      + '<path d="M60,78 Q68,84 64,94"/>'          // 左颊
+      + '<path d="M140,78 Q132,84 136,94"/>'       // 右颊
+      + '<path d="M88,112 Q90,148 87,162" clip-path="url(#'+uid+'b)"/>'
+      + '<path d="M100,110 Q101,150 100,166" clip-path="url(#'+uid+'b)"/>'
+      + '<path d="M112,112 Q110,148 113,162" clip-path="url(#'+uid+'b)"/>'
+      + '<path d="M72,150 Q78,143 85,151" clip-path="url(#'+uid+'b)"/>'
+      + '<path d="M115,151 Q122,143 128,150" clip-path="url(#'+uid+'b)"/>'
+      + '</g>';
+  }
+
+  /* 玳瑁斑块层（确定性随机） */
+  if(tortie){
+    const n = 6 + Math.floor(rnd()*3);
+    let spots='';
+    for(let i=0;i<n;i++){
+      const cx = 46 + rnd()*108;
+      const cy = i%2===0 ? (106 + rnd()*58) : (110 + rnd()*50);
+      const rx = 8 + rnd()*17;
+      const ry = 6 + rnd()*12;
+      const c = (i%2===0) ? orangePatch : dark;
+      spots += '<ellipse cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" rx="'+rx.toFixed(1)+'" ry="'+ry.toFixed(1)+'" fill="'+c+'" transform="rotate('+(Math.floor(rnd()*60)-30)+' '+cx.toFixed(1)+' '+cy.toFixed(1)+')"/>';
+    }
+    svg += '<g clip-path="url(#'+uid+'b)">'+spots+'</g>';
+    const hspots = '<ellipse cx="64" cy="84" rx="9" ry="7" fill="'+(rnd()>0.5?orangePatch:dark)+'"/><ellipse cx="136" cy="86" rx="8" ry="6" fill="'+(rnd()>0.5?orangePatch:dark)+'"/>';
+    svg += '<g clip-path="url(#'+uid+'h)">'+hspots+'</g>';
+  }
+
+  /* 面部细节 */
+  const eyeC = (rnd()>0.5) ? '#f2c14e' : '#79a85c';
+  svg += '<g>'
+    + '<ellipse cx="76" cy="70" rx="11" ry="13" fill="#fff"/>'
+    + '<ellipse cx="124" cy="70" rx="11" ry="13" fill="#fff"/>'
+    + '<ellipse cx="76" cy="71" rx="6.5" ry="8.5" fill="'+eyeC+'"/>'
+    + '<ellipse cx="124" cy="71" rx="6.5" ry="8.5" fill="'+eyeC+'"/>'
+    + '<ellipse cx="76" cy="72" rx="2.4" ry="6" fill="#26221c"/>'
+    + '<ellipse cx="124" cy="72" rx="2.4" ry="6" fill="#26221c"/>'
+    + '<circle cx="79.5" cy="67" r="1.7" fill="#fff" opacity=".9"/>'
+    + '<circle cx="127.5" cy="67" r="1.7" fill="#fff" opacity=".9"/>'
+    + '<path d="M97,90 L103,90 L100,95.5 Z" fill="#e8a0a0"/>'
+    + '<path d="M55,60 L42,52 M55,66 L40,62 M55,72 L44,72" stroke="#b9ad9c" stroke-width="1.6" stroke-linecap="round" opacity=".55"/>'
+    + '<path d="M145,60 L158,52 M145,66 L160,62 M145,72 L156,72" stroke="#b9ad9c" stroke-width="1.6" stroke-linecap="round" opacity=".55"/>'
+    + '<path d="M46,50 L58,42 M46,50 L52,38" stroke="#e8a0a0" stroke-width="6" stroke-linecap="round" opacity=".8"/>'
+    + '<path d="M154,50 L142,42 M154,50 L148,38" stroke="#e8a0a0" stroke-width="6" stroke-linecap="round" opacity=".8"/>'
+    + '</g>';
+
+  svg += '</svg>';
+  return svg;
+}
+</script>
+
+<script id="ui-script">
+'use strict';
+/* ============ UI 交互 ============ */
+const cards = Array.from(document.querySelectorAll('.cat-card'));
+const $ = (sel, root=document)=>root.querySelector(sel);
+
+/* 照片上传（压缩缩略图，仅本地预览） */
+cards.forEach(card=>{
+  const idx=card.dataset.idx;
+  const img=$('.photo-preview', card);
+  const input=$('[data-role="photo"]', card);
+  const label=$('.photo-label', card);
+  input.addEventListener('change', ()=>{
+    const file=input.files && input.files[0];
+    if(!file) return;
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const im=new Image();
+      im.onload=()=>{
+        const scale=Math.min(1, 180/im.width, 180/im.height);
+        const c=document.createElement('canvas');
+        c.width=Math.round(im.width*scale);
+        c.height=Math.round(im.height*scale);
+        c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+        img.src=c.toDataURL('image/jpeg',0.8);
+        img.hidden=false;
+        label.textContent='点击更换照片';
+      };
+      im.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+/* 性别切换：母猫显示玳瑁选项 */
+function updateSexUI(card){
+  const sex=card.querySelector('input[name="sex'+card.dataset.idx+'"]:checked').value;
+  const tf=card.querySelector('[data-role="tortie-field"]');
+  tf.hidden=(sex!=='F');
+  const tag=card.querySelector('.tag');
+  tag.textContent=(sex==='M')?'♂ 雄性':'♀ 雌性';
+}
+
+/* 毛色联动：橘/奶油 → 虎斑选项禁用 */
+function updateColorUI(card){
+  const color=card.querySelector('input[name="color'+card.dataset.idx+'"]:checked').value;
+  const agouti=card.querySelector('[data-role="agouti"]');
+  const hint=card.querySelector('[data-role="agouti-hint"]');
+  const isOrange=(color==='orange'||color==='cream');
+  agouti.disabled=isOrange;
+  hint.hidden=!isOrange;
+  if(isOrange && !agouti.checked){ agouti.checked=true; }
+}
+
+/* 白斑/纯白互斥联动 */
+function updateWhiteUI(card){
+  const isw=card.querySelector('[data-role="iswhite"]');
+  const panel=card.querySelector('[data-role="white-panel"]');
+  const whiteSeg=card.querySelector('[data-role="white"]');
+  panel.hidden=!isw.checked;
+  whiteSeg.style.opacity=isw.checked?'0.4':'1';
+  whiteSeg.style.pointerEvents=isw.checked?'none':'auto';
+  const tortie=card.querySelector('[data-role="tortie"]');
+  if(isw.checked && tortie.checked) tortie.checked=false;
+  tortie.disabled=isw.checked;
+}
+
+function updateTortieUI(card){
+  const tortie=card.querySelector('[data-role="tortie"]');
+  const panel=card.querySelector('[data-role="tortie-panel"]');
+  panel.hidden=!tortie.checked;
+  const isw=card.querySelector('[data-role="iswhite"]');
+  if(tortie.checked && isw.checked) isw.checked=false;
+}
+
+cards.forEach(card=>{
+  card.querySelectorAll('input[name^="sex"]').forEach(r=>r.addEventListener('change',()=>updateSexUI(card)));
+  card.querySelectorAll('input[name^="color"]').forEach(r=>r.addEventListener('change',()=>updateColorUI(card)));
+  card.querySelector('[data-role="agouti"]').addEventListener('change',()=>updateColorUI(card));
+  card.querySelector('[data-role="tortie"]').addEventListener('change',()=>{updateTortieUI(card);updateSexUI(card);});
+  card.querySelector('[data-role="iswhite"]').addEventListener('change',()=>{updateWhiteUI(card);updateTortieUI(card);});
+  card.querySelectorAll('input[name^="white"]').forEach(r=>r.addEventListener('change',()=>{}));
+  card.querySelectorAll('input[name^="wcolor"]').forEach(r=>r.addEventListener('change',()=>{}));
+  updateSexUI(card); updateColorUI(card); updateWhiteUI(card); updateTortieUI(card);
+});
+
+/* 读取卡片状态 */
+function readCat(card){
+  const idx=card.dataset.idx;
+  const q=(sel)=>card.querySelector(sel);
+  const v=(name)=>q('input[name="'+name+idx+'"]:checked').value;
+  const ck=(role)=>q('[data-role="'+role+'"]').checked;
+  return {
+    sex: v('sex'),
+    color: v('color'),
+    tortie: ck('tortie'),
+    hiddenColor: q('[data-role="tortie-color"] input:checked') ? q('[data-role="tortie-color"] input:checked').value : 'black',
+    agouti: ck('agouti'),
+    whiteLevel: +v('white'),
+    isWhite: ck('iswhite'),
+    hiddenAgouti: q('[data-role="hidden-agouti"]').checked,
+    whiteHiddenColor: q('[data-role="white-color"] input:checked') ? q('[data-role="white-color"] input:checked').value : 'black',
+  };
+}
+function catForGenetics(cat){
+  return {
+    sex: cat.sex,
+    color: cat.tortie ? cat.hiddenColor : cat.color,
+    tortie: cat.tortie,
+    agouti: cat.agouti,
+    whiteLevel: cat.whiteLevel,
+    isWhite: cat.isWhite,
+    hiddenColor: cat.isWhite ? cat.whiteHiddenColor : cat.hiddenColor,
+    hiddenAgouti: cat.hiddenAgouti,
+  };
+}
+
+/* 渲染结果 */
+function renderCard(item, sex){
+  const p=item.phen;
+  const div=document.createElement('div');
+  div.className='card';
+  div.innerHTML='<div class="svg-box">'+catSVG(p)+'</div>'
+    +'<div class="p-name">'+displayName(p)+'</div>'
+    +'<div class="p-prob">'+(item.prob*100).toFixed(1)+'%</div>'
+    +'<div class="p-desc">'+displayDesc(p, sex)+'</div>'
+    +'<div class="bar"><i style="width:'+Math.max(2,item.prob*100)+'%"></i></div>';
+  return div;
+}
+
+function renderResults(result){
+  const sec=document.getElementById('resultSec');
+  const sum=document.getElementById('summary');
+  const gm=document.getElementById('gridM');
+  const gf=document.getElementById('gridF');
+  const top=(arr)=>arr[0] ? displayName(arr[0].phen)+' '+Math.round(arr[0].prob*100)+'%' : '—';
+  sum.innerHTML='<span class="s-item">共枚举 <b>'+result.combos+'</b> 种亲代基因型组合</span>'
+    +'<span class="s-item">公猫后代最可能：<b>'+top(result.M)+'</b></span>'
+    +'<span class="s-item">母猫后代最可能：<b>'+top(result.F)+'</b></span>'
+    +'<span class="s-item small">以下概率在每个性别内独立归一化（各计 100%）</span>';
+  const fill=(grid, arr, sex)=>{
+    grid.innerHTML='';
+    const shown=arr.filter(x=>x.prob>=0.01);
+    const rest=arr.filter(x=>x.prob<0.01);
+    shown.forEach(x=>grid.appendChild(renderCard(x, sex)));
+    if(rest.length){
+      const div=document.createElement('div');
+      div.className='card other';
+      const total=rest.reduce((s,x)=>s+x.prob,0);
+      div.innerHTML='<div class="svg-box"><svg viewBox="0 0 200 190"><g fill="#c9c2b6"><path d="M35,44 L58,6 L96,40 Z"/><path d="M104,40 L142,6 L165,44 Z"/><ellipse cx="100" cy="78" rx="62" ry="54"/><path d="M38,124 Q36,166 70,166 Q100,176 130,166 Q164,166 162,124 Q150,100 100,100 Q50,100 38,124 Z"/></g></svg></div>'
+        +'<div class="p-name">其他（'+rest.length+' 种）</div>'
+        +'<div class="p-prob">'+(total*100).toFixed(1)+'%</div>'
+        +'<div class="p-desc">每种概率均低于 1%，合计如上</div>';
+      grid.appendChild(div);
+    }
+  };
+  fill(gm, result.M, 'M');
+  fill(gf, result.F, 'F');
+  sec.hidden=false;
+  sec.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+document.getElementById('calcBtn').addEventListener('click', ()=>{
+  const father=catForGenetics(readCat(cards[0]));
+  const mother=catForGenetics(readCat(cards[1]));
+  renderResults(predict(father, mother));
+});
+</script>
+</body>
+</html>
